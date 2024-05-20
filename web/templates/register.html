@@ -2,11 +2,17 @@
 {% load static %}
 {% block title %}
 用户注册
-{% endblock title %}
+{% endblock %}
 
 {% block css %}
  <link rel="stylesheet" href="{% static "css/account.css" %}" >
-    {% endblock css %}
+    <style>
+    .error_msg{
+        color: red;
+        position: absolute;
+    }
+    </style>
+{% endblock %}
 
 {% block body %}
       <div class="account">
@@ -18,18 +24,56 @@
             <div class="form-group">
                   <label for='{field.id_for_label}}'>{{ field.label }}</label>
                 <div class="clearfix">
-                <div class="col-md-6">{{ field }}</div>
-                <div class="col-md-6"><input type="button" class="btn btn-default" value="获取验证码"></div>
+                <div class="col-md-6">{{ field }}
+                </div>
+                <div class="col-md-6"><input id="btnSms" type="button" class="btn btn-default" value="获取验证码"></div>
                 </div>
                 </div>
         {% else %}
             <div class="form-group">
             <label for="{{ field.id_for_label}}">{{ field.label }}</label>
                              {{field}}
+                <span class="error_msg"></span>
             </div>
               {% endif%}
       {% endfor %}
          <button type="submit" class="btn btn-default">Submit</button>
       </form>
       </div>
-{% endblock body %}
+{% endblock %}
+{% block js %}
+    <script>
+    $( function(){
+       bindClinkBtnSms();
+    });
+    function bindClinkBtnSms(){
+        $("#btnSms").click(function () {
+            $('.error_msg').empty()
+            //获取用户输入手机号
+            var phone = $("#id_phone").val();
+            //发送ajax请求,把手机号发送到后端
+            $.ajax({
+                url:"{% url "send_sms" %}",
+                type:"GET",
+                data: {
+                    phone:phone,
+                    tpl:"register"
+                },
+                dataType:"JSON",//将后端发来的数据反序列成json数据
+                //ajax发送请求成功后，接受后端发来的返回值res
+                success:function(res){
+                    if (res.status){
+                        console.log()
+                    }else{
+                        //返回值是{status:False,errors:{phone:["错误信息"]}}
+                        $.each(res.errors,function(key,value){
+                            $("#id_"+ key).next().text(value[0])
+                        }
+                        )
+                    }
+                }
+            })
+        })
+    }
+    </script>
+{% endblock %}
